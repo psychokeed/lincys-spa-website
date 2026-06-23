@@ -1,0 +1,96 @@
+LINCY'S SPA — BOOKING RECORD SETUP (Google Sheets)
+=====================================================
+
+This connects your website's booking form to a free Google Sheet, so every
+booking gets automatically saved as a new row — no app, no monthly cost.
+
+Takes about 5 minutes, one time only.
+
+
+STEP 1 — Create the Sheet
+--------------------------
+1. Go to sheets.google.com and create a new blank spreadsheet.
+2. Name it something like "Lincy's Spa Bookings".
+3. In row 1, add these column headers (one per cell, A1 to G1):
+   Submitted At | Name | Phone | Service | Date | Time | Notes
+
+
+STEP 2 — Add the Script
+------------------------
+1. In your new sheet, click Extensions (top menu) → Apps Script.
+2. Delete anything in the editor box that opens.
+3. Paste in the script below exactly as written.
+4. Click the Save icon (or Ctrl+S / Cmd+S).
+
+--- COPY FROM HERE ---
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+
+  sheet.appendRow([
+    data.submittedAt || new Date().toISOString(),
+    data.name || "",
+    data.phone || "",
+    data.service || "",
+    data.date || "",
+    data.time || "",
+    data.notes || ""
+  ]);
+
+  return ContentService.createTextOutput(JSON.stringify({ status: "ok" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+--- COPY TO HERE ---
+
+
+STEP 3 — Deploy as a Web App
+------------------------------
+1. Click the blue "Deploy" button (top right) → "New deployment".
+2. Click the gear icon next to "Select type" → choose "Web app".
+3. Fill in:
+   - Description: "Lincy's booking logger" (or anything you like)
+   - Execute as: Me
+   - Who has access: Anyone
+4. Click "Deploy".
+5. Google will ask you to authorize — click through "Advanced" →
+   "Go to [project name] (unsafe)" → "Allow". This warning is normal;
+   it's just Google being cautious about a script accessing your own sheet.
+6. Copy the "Web app URL" it gives you — it looks like:
+   https://script.google.com/macros/s/AKfycb.../exec
+
+
+STEP 4 — Connect it to the Website
+------------------------------------
+1. Open index.html in any text editor (Notepad, VS Code, etc.).
+2. Find this line near the top of the <script> section:
+
+   const BOOKING_LOG_URL = "";
+
+3. Paste your Web App URL between the quotes, like:
+
+   const BOOKING_LOG_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+
+4. Save the file.
+
+That's it — every booking made through the site (whether through the full
+form or the quick "Book" buttons on each service) will now show up as a new
+row in your Google Sheet automatically, in the background, the moment
+someone confirms and sends their WhatsApp message.
+
+
+NOTES
+-----
+- If you ever update the script in Apps Script, you need to create a NEW
+  deployment (Deploy → New deployment) for changes to take effect — editing
+  the existing deployment alone won't update the live URL's behavior.
+- This sheet has no password — anyone with the URL link to the sheet itself
+  (not the script URL) could view it if you share that link. Keep the
+  sheet's sharing settings private (default is "Only you" unless changed).
+- The quick "Book" buttons in the treatment menu don't collect name/date/time
+  (they're meant to be fast), so those rows will show the service only, with
+  a note that says it came from the quick button. Full details only get
+  logged when someone uses the proper booking form.
+- If BOOKING_LOG_URL is left blank, the website still works completely
+  normally — bookings just won't be saved anywhere. Nothing breaks.
